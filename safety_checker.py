@@ -18,8 +18,8 @@ class VisitNodesSafety(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
-        self.check_for_mutable_args_in_func_def()
-        self.check_for_unreachable_code()
+        self.check_for_mutable_args_in_func_def(node)
+        self.check_for_unreachable_code(node)
         
         self.generic_visit(node)
 
