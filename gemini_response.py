@@ -1,6 +1,6 @@
 from google import genai
 import os
-from load_dotenv import dotenv
+from dotenv import load_dotenv
 
 def get_gemini_response(prompt: str, model: str):
 
