@@ -7,6 +7,7 @@ prompt = """```python
 def numnum():
     # Define the two numbers
     num1 = 10
+    break
     num2 = 20
                     
     while num2 > 1:
