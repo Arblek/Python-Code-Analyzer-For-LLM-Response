@@ -14,10 +14,22 @@ class VisitNodesSafety(ast.NodeVisitor):
         #Checks if while uses a constant like 1 or True, if so it checks if it has any way of exiting the loop
         if isinstance(node.test, ast.Constant) and bool(node.test.value):
             self._has_exit_conditions(node)
+
         else:
         #Checks the while loop condition
-            conditions = [condition for condition in ast.walk(node) ]
-            print(conditions)
+            condition_variables = {var.id for var in ast.walk(node.test) if isinstance(var, ast.Name)}
+
+            modified_variables = set()
+            for var in ast.walk(node):
+                if isinstance(var, ast.Assign):
+                    for target in var.targets:
+                        if isinstance(target, ast.Name):
+                            modified_variables.add(target.id)
+                elif isinstance(var, ast.AugAssign):
+                    modified_variables.add(var.id)
+
+            if not (condition_variables & modified_variables):
+                self.errors.append(f"Possible infinit loop! The variables used in condition {condition_variables} are never modified in loop")
 
         self.generic_visit(node)
 

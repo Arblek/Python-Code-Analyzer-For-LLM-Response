@@ -9,8 +9,9 @@ def numnum():
     num1 = 10
     num2 = 20
                     
-    while num1 > 3:
+    while num1 > 3 and num2 > 4:
         print("a")
+        num2 = 0
 
     # Add the two numbers and divide the result by 2
     result = (num1 + num2) / 2
