@@ -26,7 +26,7 @@ class VisitNodesSafety(ast.NodeVisitor):
                         if isinstance(target, ast.Name):            #If it finds a variable it gets added to the modified_variables set()
                             modified_variables.add(target.id)
                 elif isinstance(var, ast.AugAssign):                #This elif is used to catch the case where a variable if modified like this x += 1
-                    modified_variables.add(var.id)
+                    modified_variables.add(var.target.id)
 
             if not (condition_variables & modified_variables):      #Cross references the sets 
                 self.errors.append(f"Possible infinit loop! The variables used in condition {condition_variables} are never modified in loop")
