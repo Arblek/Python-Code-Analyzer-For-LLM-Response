@@ -2,8 +2,8 @@ from code_parser import extract_python_code_from_response
 from safety_checker import VisitNodesSafety
 import ast
 
-#prompt = "Write python function that adds two numbers and than divide by 2 the result"
-prompt = """```python
+prompt = "Write python function that adds two numbers and than divide by 2 the result and add a infinite while loop and add a x += 1 something in the loop"
+prompt1 = """```python
 def numnum():
     # Define the two numbers
     num1 = 10
@@ -26,6 +26,7 @@ def x(a=[]):
                 """
 
 code = extract_python_code_from_response(prompt=prompt)
+print(code)
 safecheck = VisitNodesSafety(code)
 print(safecheck.errors)
 print(safecheck.warnings)

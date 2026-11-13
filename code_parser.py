@@ -10,9 +10,9 @@ def validate_code(candidate_code: str):
         return False
 
 def extract_python_code_from_response(prompt: str):
-    #code = test_prompt#get_gemini_response(prompt, " ")
+    code = get_gemini_response(prompt, "gemini-3.5-flash-lite")
 
-    match_first_code = re.search(r"```(?:python)?\s*\n(.*?)```", prompt, re.DOTALL | re.IGNORECASE) #Ensures that if there are multiple alternatives of the code, only the first one is checked
+    match_first_code = re.search(r"```(?:python)?\s*\n(.*?)```", code, re.DOTALL | re.IGNORECASE) #Ensures that if there are multiple alternatives of the code, only the first one is checked
     if match_first_code:
         #lines = match_first_code.group(1).splitlines()
         return match_first_code.group(1)
