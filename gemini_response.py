@@ -1,10 +1,10 @@
 from google import genai
-
-API_KEY = None
+import os
+from load_dotenv import dotenv
 
 def get_gemini_response(prompt: str, model: str):
 
-    client = genai.Client(api_key=API_KEY)
+    client = genai.Client(api_key=os.getenv("API_KEY"))
 
     interaction = client.interactions.create(
         model="gemini-3.5-flash-lite", #model
