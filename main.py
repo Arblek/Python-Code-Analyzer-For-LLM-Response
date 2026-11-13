@@ -9,18 +9,21 @@ def numnum():
     num1 = 10
     num2 = 20
                     
-    while num1 > 3 and num2 > 4:
+    while 1:
         print("a")
-        num2 = 0
 
     # Add the two numbers and divide the result by 2
     result = (num1 + num2) / 2
 
     # Print the result
     print(f"The result is: {result}")
+
+def x(a=[]):
+    pass
 ```
                 """
 
 code = extract_python_code_from_response(prompt=prompt)
 safecheck = VisitNodesSafety(code)
-safecheck.print_error() 
+print(safecheck.errors)
+print(safecheck.warnings)
