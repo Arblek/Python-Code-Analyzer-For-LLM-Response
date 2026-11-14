@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-def get_gemini_response(prompt: str, model: str):
+def get_gemini_response(prompt: str, model="gemini-3.5-flash-lite"):
 
     client = genai.Client(api_key=os.getenv("API_KEY"))
 
