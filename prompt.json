@@ -1,0 +1,5 @@
+{
+  "func": "add_half",
+  "signature": "add_half(a, b)",
+  "description": "adds two numbers and divides the result by 2"
+}
