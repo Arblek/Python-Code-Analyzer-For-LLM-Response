@@ -11,12 +11,13 @@ class VisitNodesSafety(ast.NodeVisitor):
         if self.tree:
             self.visit(self.tree)
 
+    #TODO: Fix the bug in check_for_infinite_while_condition for constant 
     def visit_While(self, node: ast.While):
         condition_result = self.check_for_infinite_while_condition(node)
 
         if self.check_for_infinite_while_constant(node):
             self.errors.append("Infinite loop")
-        if condition_result:
+        elif condition_result and not any(isinstance(child_node, (ast.Break, ast.Return, ast.Raise)) for child_node in ast.walk(node)):
             is_infinite, condition_variables = condition_result
             self.errors.append(f"Possible infinit loop! The variables used in condition {condition_variables} are never modified in loop")
 
