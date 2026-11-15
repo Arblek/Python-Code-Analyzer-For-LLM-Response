@@ -13,13 +13,18 @@ class VisitNodesSafety(ast.NodeVisitor):
 
     #TODO: Fix the bug in check_for_infinite_while_condition for constant 
     def visit_While(self, node: ast.While):
-        condition_result = self.check_for_infinite_while_condition(node)
-
-        if self.check_for_infinite_while_constant(node):
-            self.errors.append("Infinite loop")
-        elif condition_result and not any(isinstance(child_node, (ast.Break, ast.Return, ast.Raise)) for child_node in ast.walk(node)):
-            is_infinite, condition_variables = condition_result
-            self.errors.append(f"Possible infinit loop! The variables used in condition {condition_variables} are never modified in loop")
+        try:
+            condition_result_classse = self.check_for_infinite_while_condition_in_classes(node)
+            if condition_result_classse and not any(isinstance(child_node, (ast.Break, ast.Return, ast.Raise)) for child_node in ast.walk(node)):
+                is_infinite, condition_variables = condition_result_classse
+                self.errors.append(f"Possible infinit loop! The variables used in condition {condition_variables} are never modified in loop")
+        except AttributeError:
+            condition_result = self.check_for_infinite_while_condition(node)
+            if self.check_for_infinite_while_constant(node):
+                self.errors.append("Infinite loop")
+            elif condition_result and not any(isinstance(child_node, (ast.Break, ast.Return, ast.Raise)) for child_node in ast.walk(node)):
+                is_infinite, condition_variables = condition_result
+                self.errors.append(f"Possible infinit loop! The variables used in condition {condition_variables} are never modified in loop")
 
         self.generic_visit(node)
 
@@ -82,7 +87,22 @@ class VisitNodesSafety(ast.NodeVisitor):
             if not (condition_variables & modified_variables):      #Cross references the sets 
                 return True, condition_variables
             return False
-                
+
+    def check_for_infinite_while_condition_in_classes(self, node):
+        condition_variables = {var.attr for var in ast.walk(node.test) if isinstance(var, ast.Attribute)}
+        modified_variables = set()                              #Set to store the variables that are modified in the loop body
+        for var in ast.walk(node):
+            if isinstance(var, ast.Assign):                     #Checks is there is an assigment e.g:  x = 10
+                for target in var.targets:                      #A variable can be assigned like this a, b, c = 10 thats why we use a for loop here
+                    if isinstance(target, ast.Attribute):            #If it finds a variable it gets added to the modified_variables set()
+                        modified_variables.add(target.attr)
+            elif isinstance(var, ast.AugAssign):                #This elif is used to catch the case where a variable if modified like this x += 1
+                modified_variables.add(var.target.attr)
+ 
+        if not (condition_variables & modified_variables):      #Cross references the sets 
+            return True, condition_variables
+        return False      
+          
     def check_for_mutable_args_in_func_def(self, node):
         for arg in node.args.defaults:                                                      #Check for mutable arguments in function definition
             if isinstance(arg, ast.List):
