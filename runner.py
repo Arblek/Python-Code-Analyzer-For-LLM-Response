@@ -84,7 +84,7 @@ def run_harness(code: str, tests, timeout: int):
 
 
         try:
-            subprocess.run([sys.executable, "-I", "harness.py"], cwd=tmp)
+            subprocess.run([sys.executable, "-I", "harness.py"], cwd=tmp, timeout=timeout)
         except subprocess.TimeoutExpired:
             results.append("Timeout Error")
 
