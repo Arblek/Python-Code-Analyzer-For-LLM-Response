@@ -80,7 +80,8 @@ def run_harness(code: str, tests, timeout: int):
         tmp = Path(tmp)
         (tmp/"solution.py").write_text(code, encoding="utf-8")
         (tmp/"harness.py").write_text(HARNESS, encoding="utf-8")
-        (tmp/"tests_json.json").write_text(tests, encoding="utf-8")
+        parsed_json = json.dumps(_load_json_test(tests))
+        (tmp/"tests_json.json").write_text(parsed_json, encoding="utf-8")
 
 
         try:
