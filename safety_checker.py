@@ -23,6 +23,21 @@ class VisitNodesSafety(ast.NodeVisitor):
 
         self.generic_visit(node)
 
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
+        mutable_args = self.check_for_mutable_args_in_func_def(node)
+        unreachable_code = self.check_for_unreachable_code(node)
+
+        if unreachable_code:
+            is_unreachable, line = self.check_for_unreachable_code(node)
+            if is_unreachable:
+                self.warnings.append(f"Unreachable code at line {line}")
+        if mutable_args:
+            is_mutable, data_type = self.check_for_mutable_args_in_func_def(node)
+            if is_mutable:
+                self.warnings.append(f"Mutable {data_type} argument in async function definition")
+
+        self.generic_visit(node)        
+
     def visit_FunctionDef(self, node: ast.FunctionDef):
         mutable_args = self.check_for_mutable_args_in_func_def(node)
         unreachable_code = self.check_for_unreachable_code(node)
@@ -74,14 +89,19 @@ class VisitNodesSafety(ast.NodeVisitor):
         return False
 
     def check_for_unreachable_code(self, node):
-        has_terminated = False
-        for statement in node.body:                                                         #Checks for unreachable code 
-            if has_terminated:
-                line = getattr(statement, "lineno", "unknown")                              #Gets the line of the unreachable code
-                return True, line                                                                     #Breaks after the next line after the break, return or raise keyword
-            if isinstance(statement, ((ast.Break, ast.Return, ast.Raise))):                 #Sets the has_terminated to True if it encounters a break, return or raise keyword
-                has_terminated = True
-        return False
+        lines = []
+        for subnode in ast.walk(node):
+            for field in ("body", "orelse", "finalbody"):                                           #Checks for unreachable code 
+                statements = getattr(subnode, field, None)
+                if not isinstance(statements, list):
+                    continue
+                has_terminated = False
+                for statement in statements:
+                    if has_terminated:                                                              #Gets the line of the unreachable code
+                        lines.append(getattr(statement, "lineno", 0))                               #Breaks after the next line after the break, return or raise keyword
+                    if isinstance(statement, ((ast.Break, ast.Return, ast.Raise))):                 #Sets the has_terminated to True if it encounters a break, return or raise keyword
+                        has_terminated = True
+        return (True, min(lines)) if lines else False
 
     def check_for_indentations_or_syntax_errors(self, code):
         try:
@@ -92,4 +112,6 @@ class VisitNodesSafety(ast.NodeVisitor):
         except SyntaxError as e:
             self.errors.append(f"Syntax error at line {e.lineno}")
             return None
+        except TypeError:
+            self.errors.append("No code found")
 
