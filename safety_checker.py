@@ -47,9 +47,7 @@ class VisitNodesSafety(ast.NodeVisitor):
         unreachable_code = self.check_for_unreachable_code(node)
 
         if unreachable_code:
-            is_unreachable = self.check_for_unreachable_code(node)
-            if is_unreachable:
-                self.warnings.append(f"Unreachable code at line {node.lineno}")
+            self.warnings.append(f"Unreachable code at line {node.lineno}")
 
         if mutable_args:
             is_mutable, data_type = self.check_for_mutable_args_in_func_def(node)
@@ -106,9 +104,13 @@ class VisitNodesSafety(ast.NodeVisitor):
                 statements = getattr(subnode, field, None)
                 if not isinstance(statements, list):
                     continue
+
+                has_terminated = False
                 for statement in statements:
-                    if isinstance(statement, ((ast.Break, ast.Return, ast.Raise))):                 #Sets the has_terminated to True if it encounters a break, return or raise keyword
+                    if has_terminated:
                         return True
+                    if isinstance(statement, ((ast.Break, ast.Return, ast.Raise))):                 #Sets the has_terminated to True if it encounters a break, return or raise keyword
+                        has_terminated = True
         return False
 
     def check_for_indentations_or_syntax_errors(self, code):
