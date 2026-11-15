@@ -40,6 +40,7 @@ class VisitNodesSafety(ast.NodeVisitor):
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         mutable_args = self.check_for_mutable_args_in_func_def(node)
+        mutable_kw_args = self.check_for_mutable_kw_args_in_func_def(node)
         unreachable_code = self.check_for_unreachable_code(node)
 
         if unreachable_code:
@@ -50,6 +51,10 @@ class VisitNodesSafety(ast.NodeVisitor):
             is_mutable, data_type = self.check_for_mutable_args_in_func_def(node)
             if is_mutable:
                 self.warnings.append(f"Mutable {data_type} argument in function definition")
+        if mutable_kw_args:
+            is_mutable, data_type = self.check_for_mutable_kw_args_in_func_def(node)
+            if is_mutable:
+                self.warnings.append(f"Mutable {data_type} keyword argument in function definition")
 
         self.generic_visit(node)
 
@@ -80,6 +85,16 @@ class VisitNodesSafety(ast.NodeVisitor):
                 
     def check_for_mutable_args_in_func_def(self, node):
         for arg in node.args.defaults:                                                      #Check for mutable arguments in function definition
+            if isinstance(arg, ast.List):
+                return True, "list"
+            elif isinstance(arg, ast.Dict):
+                return True, "dictionary"
+            elif isinstance(arg, ast.Set):
+                return True, "set"
+        return False
+
+    def check_for_mutable_kw_args_in_func_def(self, node):
+        for arg in node.args.kw_defaults:                                                      #Check for mutable arguments in function definition
             if isinstance(arg, ast.List):
                 return True, "list"
             elif isinstance(arg, ast.Dict):
