@@ -34,6 +34,7 @@ import sys
 HARNESS = r"""
 import json
 from pathlib import Path
+import math
 
 func_result = None
 
@@ -49,7 +50,7 @@ for test in tests:
 
     try:
         result = func(*args, **kwargs)
-        if result == test.get("expected"):
+        if math.isclose(result, test.get("expected")):
             func_result = f"{index} Pass"
         elif "raises" in test:
             func_result = f"{index} Failed: Expected {test.get("raises")}, but got nothing"
