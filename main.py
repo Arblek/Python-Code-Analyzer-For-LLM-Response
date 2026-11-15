@@ -1,32 +1,23 @@
-from code_parser import extract_python_code_from_response
 from safety_checker import VisitNodesSafety
-import ast
+from llm_prompts import code_prompt_and_tests
+from runner import run_harness
+import json
 
-prompt = "Write python function that adds two numbers and than divide by 2 the result and add a infinite while loop and add a x += 1 something in the loop"
-prompt1 = """```python
-def numnum():
-    # Define the two numbers
-    num1 = 10
-    break
-    num2 = 20
-                    
-    while num2 > 1:
-        num2 += 1
-        print("a")
+tasks = code_prompt_and_tests()
 
-    # Add the two numbers and divide the result by 2
-    result = (num1 + num2) / 2
 
-    # Print the result
-    print(f"The result is: {result}")
+func = """
+def count_vowels(s):
+    num = 10
+    while num > 3:
+        pass
+"""
 
-def x(a=[]):
-    pass
-```
-                """
+for code, test in tasks:
+    print(code)
+    print(test)
 
-code = extract_python_code_from_response(prompt=prompt)
-print(code)
-safecheck = VisitNodesSafety(code)
-print(safecheck.errors)
-print(safecheck.warnings)
+    safecheck = VisitNodesSafety(code) 
+    print(safecheck.errors)
+    print(safecheck.warnings)
+    run_harness(code, test, 5)
