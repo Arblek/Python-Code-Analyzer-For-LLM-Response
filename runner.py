@@ -10,9 +10,15 @@ import json
 from pathlib import Path
 import math
 
+def record(message):
+    with open("result.txt", "a", encoding="utf-8") as file:
+        file.write(message.replace("\n", " ") + "\n")
+
 def matches(result, expected):
     numeric = (int, float)
-    if (isinstance(result, numeric) and isinstance(expected, numeric)) and not (isinstance(result, bool) and isinstance(expected, bool)):
+    if (isinstance(result, bool) != isinstance(expected, bool)):
+        return False
+    if (isinstance(result, numeric) and isinstance(expected, numeric)) :
         return math.isclose(result, expected)
     return result == expected
 
@@ -27,6 +33,9 @@ for test in tests:
     func = namespace.get(test["func"])
     args, kwargs = test.get("args", []), test.get("kwargs", {})
 
+    if not callable(func):
+        record(f"Error: function '{test['func']}' not found. Test ran: {test}@0")
+        continue
     try:
         result = func(*args, **kwargs)
         if "raises" in test:
@@ -43,8 +52,7 @@ for test in tests:
         else:
             func_result = f"Error: {type(e).__name__}. Test ran: {test}@0"
 
-    with open("result.txt", "a") as file:
-        file.write(func_result + "\n")
+    record(func_result)
 """ 
 
 def _load_json_test(text: str):
@@ -71,7 +79,7 @@ def run_harness(code: str, tests, timeout: int):
 
         result_file = tmp / "result.txt"
         if result_file.exists():
-            for line in result_file.read_text().splitlines(encoding="utf-8"):
+            for line in result_file.read_text(encoding="utf-8").splitlines():
                 msg, grade = line.rsplit("@", 1)
                 results.append((msg, int(grade)))
         else:
