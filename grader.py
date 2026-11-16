@@ -1,20 +1,19 @@
-from runner import run_harness
+from runner import run_harness, _load_json_test
 
-def grade(code, tests, timeout = 5):
-    grades = run_harness(code, tests, 5)
 
-    total_grades = 0
-    pass_grades = 0
-    failed_tests = []
-    for msg, grade in grades:
-        if grade == 1:
-            pass_grades += 1
-        else:
-            failed_tests.append(msg)
-        total_grades += 1
+def grade(code, tests, timeout=5):
+    try:
+        total_tests = len(_load_json_test(tests))
+    except Exception as e:
+        return 0.0, 0, 0, [f"Could not parse the tests: {type(e).__name__}: {e}"]
 
-    points_per_test = 100 / total_grades
-    final_grade = points_per_test * pass_grades
+    if total_tests == 0:
+        return 0.0, 0, 0, ["No tests to run"]
 
-    return final_grade, total_grades, pass_grades, failed_tests
-    
+    results = run_harness(code, tests, timeout)
+
+    pass_grades = sum(1 for _, score in results if score == 1)
+    failed_tests = [msg for msg, score in results if score != 1]
+    final_grade = 100 * pass_grades / total_tests
+
+    return final_grade, total_tests, pass_grades, failed_tests
