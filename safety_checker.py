@@ -5,7 +5,6 @@ class VisitNodesSafety(ast.NodeVisitor):
     def __init__(self, code):
         super().__init__()
         self.errors = []
-        self.warnings = []
 
         self.tree = self.check_for_indentations_or_syntax_errors(code) 
         if self.tree:
@@ -31,14 +30,12 @@ class VisitNodesSafety(ast.NodeVisitor):
         unreachable_code = self.check_for_unreachable_code(node)
 
         if unreachable_code:
-            is_unreachable = self.check_for_unreachable_code(node)
-            if is_unreachable:
-                self.warnings.append(f"Unreachable code at line {node.lineno}")
+            self.errors.append(f"Unreachable code at line {node.lineno}")
 
         if mutable_args:
             is_mutable, data_type = self.check_for_mutable_args_in_func_def(node)
             if is_mutable:
-                self.warnings.append(f"Mutable {data_type} argument in function definition at line: {node.lineno}")
+                self.errors.append(f"Mutable {data_type} argument in function definition at line: {node.lineno}")
 
         self.generic_visit(node)        
 
@@ -47,12 +44,12 @@ class VisitNodesSafety(ast.NodeVisitor):
         unreachable_code = self.check_for_unreachable_code(node)
 
         if unreachable_code:
-            self.warnings.append(f"Unreachable code at line {node.lineno}")
+            self.errors.append(f"Unreachable code at line {node.lineno}")
 
         if mutable_args:
             is_mutable, data_type = self.check_for_mutable_args_in_func_def(node)
             if is_mutable:
-                self.warnings.append(f"Mutable {data_type} argument in function definition at line: {node.lineno}")
+                self.errors.append(f"Mutable {data_type} argument in function definition at line: {node.lineno}")
 
         self.generic_visit(node)
 
@@ -89,7 +86,7 @@ class VisitNodesSafety(ast.NodeVisitor):
           
     def check_for_mutable_args_in_func_def(self, node):
         all_defaults = node.args.defaults + [kwargs for kwargs in node.args.kw_defaults]
-        for arg in all_defaults:                                                      #Check for mutable arguments in function definition
+        for arg in all_defaults:                                                      
             if isinstance(arg, ast.List):
                 return True, "list"
             elif isinstance(arg, ast.Dict):
@@ -100,7 +97,7 @@ class VisitNodesSafety(ast.NodeVisitor):
 
     def check_for_unreachable_code(self, node):
         for subnode in ast.walk(node):
-            for field in ("body", "orelse", "finalbody"):                                           #Checks for unreachable code 
+            for field in ("body", "orelse", "finalbody"):                                            
                 statements = getattr(subnode, field, None)
                 if not isinstance(statements, list):
                     continue
@@ -109,7 +106,7 @@ class VisitNodesSafety(ast.NodeVisitor):
                 for statement in statements:
                     if has_terminated:
                         return True
-                    if isinstance(statement, ((ast.Break, ast.Return, ast.Raise))):                 #Sets the has_terminated to True if it encounters a break, return or raise keyword
+                    if isinstance(statement, ((ast.Break, ast.Return, ast.Raise))):                 
                         has_terminated = True
         return False
 

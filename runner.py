@@ -5,36 +5,16 @@ import tempfile
 from pathlib import Path
 import sys
 
-# func = """
-# def count_vowels(s):
-#     vowels = "aeiou"
-#     # Convert the string to lowercase so the check is case-insensitive
-#     s_lower = s.lower()
-#     # Count each character in the string if it is in the vowels string
-#     return sum(1 for char in s_lower if char in vowels)
-#     """
-
-# parsed_tests = '''
-# [
-#   {"func": "count_vowels", "args": ["hello"], "expected": 2},
-#   {"func": "count_vowels", "args": ["AEIOUaeiou"], "expected": 10},
-#   {"func": "count_vowels", "args": ["rhythm"], "expected": 0},
-#   {"func": "count_vowels", "args": [""], "expected": 0},
-#   {"func": "count_vowels", "args": [0], "raises": "TypeError"},
-#   {"func": "count_vowels", "args": [-5], "raises": "TypeError"},
-#   {"func": "count_vowels", "args": [3.14], "raises": "TypeError"},
-#   {"func": "count_vowels", "args": [1000000000000], "raises": "TypeError"},
-#   {"func": "count_vowels", "args": [None], "raises": "TypeError"},
-#   {"func": "count_vowels", "args": [["a", "e", "i"]], "raises": "TypeError"},
-#   {"func": "count_vowels", "args": [{"a": 1}], "raises": "TypeError"},
-#   {"func": "count_vowels", "args": [True], "raises": "TypeError"}
-# ]
-# '''
-
 HARNESS = r"""
 import json
 from pathlib import Path
 import math
+
+def matches(result, expected):
+    numeric = (int, float)
+    if (isinstance(result, numeric) and isinstance(expected, numeric)) and not (isinstance(result, bool) and isinstance(expected, bool)):
+        return math.isclose(result, expected)
+    return result == expected
 
 func_result = None
 
@@ -42,7 +22,6 @@ namespace = {"__name__": "solution"}
 source = Path("solution.py").read_text(encoding="utf-8")
 exec(compile(source, "solution.py", "exec"), namespace)
 
-index = 0
 tests = json.loads(Path("tests_json.json").read_text())
 for test in tests:
     func = namespace.get(test["func"])
@@ -50,24 +29,24 @@ for test in tests:
 
     try:
         result = func(*args, **kwargs)
-        if math.isclose(result, test.get("expected")):
-            func_result = f"{index} Pass"
-        elif "raises" in test:
-            func_result = f"{index} Failed: Expected {test.get("raises")}, but got nothing"
+        if "raises" in test:
+            func_result = f"Failed: Expected {test.get("raises")}, but got nothing. Test ran: {test}@0"
+        elif matches(result, test.get("expected")):
+            func_result = f"Pass@1"
         else:
-            func_result = f"{index} Failed: Expected {test.get("expected")}, but got {result}"
+            func_result = f"Failed: Expected {test.get("expected")}, but got {result}. Test ran: {test}@0"
     except Exception as e:
         if "raises" in test and type(e).__name__ == test.get("raises"):
-            func_result = f"{index} Pass"
+            func_result = f"Pass@1"
         elif "raises" in test:
-            func_result = f"{index} Failed: Expected {test.get("raises")}, but got {type(e).__name__} instead"
+            func_result = f"Failed: Expected {test.get("raises")}, but got {type(e).__name__}. Test ran: instead {test}@0"
         else:
-            func_result = f"{index} Error: {type(e).__name__}"
+            func_result = f"Error: {type(e).__name__}. Test ran: {test}@0"
 
-    index += 1
     with open("result.txt", "a") as file:
         file.write(func_result + "\n")
 """ 
+
 def _load_json_test(text: str):
     try:
         return json.loads(text)
@@ -93,7 +72,7 @@ def run_harness(code: str, tests, timeout: int):
         with open((tmp/"result.txt"), "r") as file:
             lines = file.readlines()
             for line in lines:
-                results.append(line)
+                msg, grade = line.split('@')
+                results.append((msg, int(grade)))
 
-        for line in results:
-            print(line)
+        return results
