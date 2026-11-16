@@ -1,4 +1,3 @@
-from code_parser import extract_python_code_from_response
 import ast
 
 class VisitNodesSafety(ast.NodeVisitor):  
@@ -6,38 +5,28 @@ class VisitNodesSafety(ast.NodeVisitor):
         super().__init__()
         self.errors = []
 
+    
         self.tree = self.check_for_indentations_or_syntax_errors(code) 
         if self.tree:
             self.visit(self.tree)
 
     def visit_While(self, node: ast.While):
-        variables = self._names_in(node)
-        variables_modified = self._modified_variables(node)
-
         has_exit = any(isinstance(n, (ast.Break, ast.Return, ast.Raise))
                     for n in ast.walk(node))
         if not has_exit:
-            if isinstance(node.test, ast.Constant) and node.test.value:
-                self.errors.append(f"Infinite loop at line {node.lineno}")
+            if isinstance(node.test, ast.Constant):
+                if node.test.value:
+                    self.errors.append(f"Infinite loop at line {node.lineno}")
             else:
-                if not (self._names_in(node.test) & self._modified_variables(node)):
-                    self.errors.append(f"Possible infinit loop! The variables used in condition {self._names_in(node.test)} at line {node.lineno} are never modified in loop")
+                condition_vars = self._names_in(node.test)
+                modified_vars = self._modified_variables(node)
+                if not any(self._is_modified(name, modified_vars) for name in condition_vars):
+                    self.errors.append(
+                        f"Possible infinite loop at line {node.lineno}: "
+                        f"{sorted(condition_vars)} never modified in loop")
 
         self.generic_visit(node)
 
-    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
-        mutable_args = self.check_for_mutable_args_in_func_def(node)
-        unreachable_code = self.check_for_unreachable_code(node)
-
-        if unreachable_code:
-            self.errors.append(f"Unreachable code at line {node.lineno}")
-
-        if mutable_args:
-            is_mutable, data_type = self.check_for_mutable_args_in_func_def(node)
-            if is_mutable:
-                self.errors.append(f"Mutable {data_type} argument in function definition at line: {node.lineno}")
-
-        self.generic_visit(node)        
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         mutable_args = self.check_for_mutable_args_in_func_def(node)
@@ -52,8 +41,11 @@ class VisitNodesSafety(ast.NodeVisitor):
                 self.errors.append(f"Mutable {data_type} argument in function definition at line: {node.lineno}")
 
         self.generic_visit(node)
+    visit_AsyncFunctionDef = visit_FunctionDef      
 
-
+    def _is_modified(self, name, modified_vars):
+        return any(name == m or name.startswith(m + ".") for m in modified_vars)
+    
     def _modified_variables(self, node: ast.While):
         modified_vars = set()
 
@@ -65,22 +57,19 @@ class VisitNodesSafety(ast.NodeVisitor):
             else:
                 continue
             for target in targets:
-                for sub in ast.walk(target):
-                    if isinstance(sub, ast.Name):
-                        modified_vars.add(sub.id)
-                    elif isinstance(sub, ast.Attribute):
-                        modified_vars.add(sub.attr)
+                modified_vars |= self._names_in(target)
 
         return modified_vars
 
     def _names_in(self, node: ast.While):
+        bases = {id(n.value) for n in ast.walk(node) if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name)}
         names = set()
 
         for name in ast.walk(node):
-            if isinstance(name, ast.Name):
+            if isinstance(name, ast.Name) and id(name) not in bases:
                 names.add(name.id)
             elif isinstance(name, ast.Attribute):
-                names.add(name.attr)
+                names.add(ast.unparse(name))
 
         return names   
           
@@ -93,7 +82,7 @@ class VisitNodesSafety(ast.NodeVisitor):
                 return True, "dictionary"
             elif isinstance(arg, ast.Set):
                 return True, "set"
-        return False
+        return False, None
 
     def check_for_unreachable_code(self, node):
         for subnode in ast.walk(node):
@@ -106,7 +95,7 @@ class VisitNodesSafety(ast.NodeVisitor):
                 for statement in statements:
                     if has_terminated:
                         return True
-                    if isinstance(statement, ((ast.Break, ast.Return, ast.Raise))):                 
+                    if isinstance(statement, ((ast.Break, ast.Return, ast.Raise, ast.Continue))):                 
                         has_terminated = True
         return False
 
