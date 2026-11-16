@@ -67,12 +67,14 @@ def run_harness(code: str, tests, timeout: int):
         try:
             subprocess.run([sys.executable, "-I", "harness.py"], cwd=tmp, timeout=timeout)
         except subprocess.TimeoutExpired:
-            results.append("Timeout Error")
+            results.append(("Timeout Error", 0))
 
-        with open((tmp/"result.txt"), "r") as file:
-            lines = file.readlines()
-            for line in lines:
-                msg, grade = line.split('@')
+        result_file = tmp / "result.txt"
+        if result_file.exists():
+            for line in result_file.read_text().splitlines(encoding="utf-8"):
+                msg, grade = line.rsplit("@", 1)
                 results.append((msg, int(grade)))
+        else:
+            results.append(("Harness produced no results (code may fail on import)", 0))
 
         return results
