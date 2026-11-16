@@ -3,5 +3,55 @@
     "func": "add_half",
     "signature": "add_half(a, b)",
     "description": "adds two numbers and divides the result by 2"
+  },
+  {
+    "func": "is_even",
+    "signature": "is_even(n)",
+    "description": "returns True if the integer n is even, otherwise False"
+  },
+  {
+    "func": "reverse_string",
+    "signature": "reverse_string(s)",
+    "description": "returns the string s reversed"
+  },
+  {
+    "func": "is_palindrome",
+    "signature": "is_palindrome(s)",
+    "description": "returns True if the string reads the same forwards and backwards, ignoring case and spaces."
+  },
+  {
+    "func": "factorial",
+    "signature": "factorial(n)",
+    "description": "returns n factorial for a non-negative integer n, and raises ValueError if n is negative"
+  },
+  {
+    "func": "fizzbuzz",
+    "signature": "fizzbuzz(n)",
+    "description": "returns 'Fizz' if n is divisible by 3, 'Buzz' if divisible by 5, 'FizzBuzz' if divisible by both, otherwise n as a string"
+  },
+  {
+    "func": "second_largest",
+    "signature": "second_largest(nums)",
+    "description": "returns the second largest distinct value in a list of numbers, and raises ValueError if there are fewer than two distinct values"
+  },
+  {
+    "func": "count_vowels",
+    "signature": "count_vowels(s)",
+    "description": "returns the number of vowels (a, e, i, o, u, case-insensitive) in the string s"
+  },
+  {
+    "func": "remove_duplicates",
+    "signature": "remove_duplicates(items)",
+    "description": "returns a new list with duplicates removed, keeping the order of first appearance"
+  },
+  {
+    "func": "is_prime",
+    "signature": "is_prime(n)",
+    "description": "returns True if the integer n is a prime number, otherwise False; numbers below 2 are not prime"
+  },
+  {
+  "func": "count_forever",
+  "signature": "count_forever(start)",
+  "description": "starts at the integer start and keeps adding 1 to it in an infinite loop, never returning"
   }
 ]
